@@ -73,3 +73,40 @@ schema = strawberry.Schema(
     ],
 )
 ```
+
+## Releasing new versions
+
+1. Create PRs for the features you want to have in the new release, and get them
+   reviewed, approved and merged into the `main` branch. Don't change version
+   numbers in these feature PRs.
+
+2. Create a new PR incrementing the version of project in
+   [pyproject.toml](https://github.com/kolonialno/metrics-python/edit/main/pyproject.toml).
+   You need to change the value of the `version` field in the `[tool.poetry]`
+   section.
+
+   We follow [semantic versioning](https://semver.org/) using a
+   `major.minor.patch` format that convey backwards-compatibility. If your
+   change is backwards-compatible, increment the patch version by one.
+   Otherwise, increment the minor version by one.
+
+3. Tag the release.
+
+   There are multiple ways to tag a release. We recommend using the Github UI as
+   this makes it easy to create a release with a well-written and well-formatted
+   change log. After bumping the package version you navigate to the
+   [new release page](https://github.com/kolonialno/metrics-python/releases/new). Fill in
+   the correct tag version and release title. If you for example were to bump
+   `metrics-python` to `0.1.0` you would fill in
+
+   - Tag version: `metrics-python/v0.1.0`
+   - Release title: `metrics-python v0.1.0`
+
+   Make sure to match the tag name pattern `metrics-python/v*`, so that you trigger
+   release of the correct project. The change log should be a succinct
+   description of the changes since the last release. If you are unsure how to
+   write a good change log you can consult the
+   [release list](https://github.com/kolonialno/metrics-python/releases) for inspiration.
+
+4. GitHub Actions will build the release and upload it to
+   [GemFury](https://manage.fury.io/dashboard/oda).
