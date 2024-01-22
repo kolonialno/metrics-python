@@ -1,4 +1,6 @@
-# Metrics
+# metrics-python
+
+> Generic set of metrics for Python applications.
 
 We collect metrics utils in this package to hopefully make a generic package we
 can use in other projects in the future.
