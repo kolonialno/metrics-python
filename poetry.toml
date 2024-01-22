@@ -1,2 +1,9 @@
+[repositories]
+[repositories.oda]
+url = "https://pypi.fury.io/oda"
+
+[repositories.oda-python]
+url = "https://europe-python.pkg.dev/nube-hub/python"
+
 [virtualenvs]
 in-project = true
