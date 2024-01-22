@@ -1,0 +1,44 @@
+name: metrics-python CI
+
+on: push
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  python-lint:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "Python lint: black"
+            target: black
+          - name: "Python lint: ruff"
+            target: ruff
+          - name: "Python lint: mypy"
+            target: mypy
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Python project
+        uses: kolonialno/actions/setup-python@setup-python-2.2.2
+        with:
+          checkout: true
+          tool-versions-path: .tool-versions
+
+      - name: Run linter
+        run: make lint-${{ matrix.target }}
+
+  python-tests:
+    name: "Python tests: pytest"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Python project
+        uses: kolonialno/actions/setup-python@setup-python-2.2.2
+        with:
+          checkout: true
+          tool-versions-path: .tool-versions
+
+      - name: Run pytest
+        run: |
+          make test-pytest-coverage

@@ -1,0 +1,113 @@
+[tool.poetry]
+name = "metrics-python"
+version = "0.0.1"
+description = "Generic set of metrics for Python applications."
+authors = ["Eirik Martiniussen Sylliaas <eirik@sylliaas.no>"]
+readme = "README.md"
+packages = [{include = "metrics_python", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">= 3.11, < 3.13"
+
+[tool.poetry.group.dev.dependencies]
+prometheus-client = "^0.19.0"
+gunicorn = "^21.2.0"
+django = "^5.0.1"
+strawberry-graphql = "^0.217.1"
+celery = "^5.3.6"
+mypy = "^1.8.0"
+ruff = "^0.1.14"
+black = "^23.12.1"
+pytest = "^7.4.4"
+pytest-cov = "^4.1.0"
+pytest-env = "^1.1.3"
+pytest-mock = "^3.12.0"
+pytest-socket = "^0.6.0"
+pytest-xdist = "^3.5.0"
+pytest-lazy-fixture = "^0.6.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+]
+select = [
+    # Regular flake8 rules
+    "C", "E", "F", "W",
+    # flake8-bugbear rules
+    "B",
+    # Import sorting rules (isort replacement)
+    "I",
+    # Pylint rules
+    "PLC", "PLE", "PLR", "PLW",
+    # Do not include small Ruff rules (including useless noqa) yet
+    # "RUF",
+]
+ignore = [
+    # E501: Leave line-length stuff for black to deal with for now
+    "E501",
+    # Disable magic value comparison. They're perfectly valid in tests and quite a few
+    # other places in the codebase. It would just be annoying to refactor.
+    "PLR2004",
+    # Too many return statements.
+    "PLR0911",
+    # Too many arguments to function call.
+    "PLR0913",
+]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.isort]
+combine-as-imports = true
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["strawberry.ext.mypy_plugin"]
+strict = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "*.tests.*",
+]
+ignore_errors = true
+
+[tool.black]
+target-version = ['py312']
+include = '\.pyi?$'
+extend-exclude = 'migrations'
+
+safe = true
+
+[tool.pytest.ini_options]
+testpaths = ["metrics_python"]
+# Include captured log messages in system-out in CI report file
+junit_logging = "system-out"
+markers = [ ]
+# --- pytest-env settings
+env = ["ENV_PATH=.env.test"]
+
+[tool.coverage.run]
+branch = true
+source = [ "metrics_python" ]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+fail_under = 1
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]
+
+[tool.coverage.html]
+directory = "coverage"

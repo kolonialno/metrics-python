@@ -1,0 +1,35 @@
+name: metrics-python Release
+
+on:
+  push:
+    tags:
+      - "metrics-python/v*"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python project
+        uses: kolonialno/actions/setup-python@setup-python-2.2.2
+        with:
+          checkout: true
+          tool-versions-path: .tool-versions
+
+      - name: Run lint
+        run: make lint
+
+      - name: Run test
+        run: make test
+
+      - name: Poetry build
+        run: poetry build
+
+      - name: Publish to Gemfury
+        run: poetry publish -r oda -u ${{ secrets.GEMFURY_PUSH_TOKEN }} -p NOPASS
+
+      - name: Publish to Artifact Registry
+        run: poetry publish -r oda-python
