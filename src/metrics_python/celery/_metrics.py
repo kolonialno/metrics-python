@@ -32,6 +32,7 @@ TASK_LAST_EXECUTION = Gauge(
     "task_last_execution",
     "Last time a task was executed",
     ["task", "queue", "state"],
+    multiprocess_mode="mostrecent",
     namespace=NAMESPACE,
     subsystem="celery",
 )
