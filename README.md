@@ -35,6 +35,36 @@ from metrics_python.celery import setup_celery_metrics
 setup_celery_metrics()
 ```
 
+## django-api-decorator
+
+To measure request durations to views served by django-api-decorator, add the `DjangoAPIDecoratorMetricsMiddleware`.
+
+```python
+MIDDLEWARE = [
+    ...
+     "metrics_python.django_api_decorator.DjangoAPIDecoratorMetricsMiddleware",
+]
+```
+
+## GraphQL
+
+### Strawberry
+
+The Prometheus extension needs to be added to the schema to instrument GrapQL
+operations.
+
+```python
+import strawberry
+from metrics_python.graphql.strawberry import PrometheusExtension
+
+schema = strawberry.Schema(
+    Query,
+    extensions=[
+        PrometheusExtension,
+    ],
+)
+```
+
 ## Gunicorn
 
 To setup Gunicorn monitoring, add the Prometheus logger (to measure request
@@ -55,25 +85,6 @@ def post_request(worker: Any, req: Any, environ: Any, resp: Any) -> None:
 
 def post_fork(server: Any, worker: Any) -> None:
     export_worker_busy_state(worker_type="gunicorn", busy=False)
-```
-
-## GraphQL
-
-### Strawberry
-
-The Prometheus extension needs to be added to the schema to instrument GrapQL
-operations.
-
-```python
-import strawberry
-from metrics_python.graphql.strawberry import PrometheusExtension
-
-schema = strawberry.Schema(
-    Query,
-    extensions=[
-        PrometheusExtension,
-    ],
-)
 ```
 
 ## Releasing new versions
