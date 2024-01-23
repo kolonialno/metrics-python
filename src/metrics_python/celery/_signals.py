@@ -10,7 +10,6 @@ from ._metrics import (
     TASK_EXECUTION_DELAY,
     TASK_EXECUTION_DURATION,
     TASK_LAST_EXECUTION,
-    TASKS_EXECUTED,
 )
 
 
@@ -70,9 +69,6 @@ def task_postrun(task: Any, **kwargs: Any) -> None:
 
     # Set the worker as idle after the task is processed
     export_worker_busy_state(busy=False, worker_type="celery")
-
-    # Bump the tasks executed counter
-    TASKS_EXECUTED.labels(task=task.name, queue=queue, state=state).inc()
 
     # Update the last executed timestamp
     TASK_LAST_EXECUTION.labels(
