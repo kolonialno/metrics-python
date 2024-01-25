@@ -50,7 +50,7 @@ MIDDLEWARE = [
 
 ### Strawberry
 
-The Prometheus extension needs to be added to the schema to instrument GrapQL
+The Prometheus extension needs to be added to the schema to instrument GraphQL
 operations.
 
 ```python
@@ -63,6 +63,18 @@ schema = strawberry.Schema(
         PrometheusExtension,
     ],
 )
+```
+
+### Graphene
+
+metrics-python has a Graphene middleware to instrument GraphQL operations. Add
+the middleware to Graphene by changing the GRAPHENE config in `settings.py`.
+
+```python
+GRAPHENE = {
+    ...
+    "MIDDLEWARE": ["metrics_python.graphql.graphene.MetricsMiddleware"],
+}
 ```
 
 ## Gunicorn
