@@ -11,14 +11,6 @@ OPERATION_DURATION = Histogram(
     subsystem="graphql",
 )
 
-RESOLVE_DURATION = Histogram(
-    "resolve_duration",
-    "Time spent on resolving a graphql field.",
-    ["field_name", "parent_type", "field_path", "path"],
-    unit="seconds",
-    namespace=NAMESPACE,
-    subsystem="graphql",
-)
 
 LIFECYCLE_STEP_DURATION = Histogram(
     "lifecycle_step_duration",

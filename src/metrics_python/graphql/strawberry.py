@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, Iterator
 from strawberry.extensions import LifecycleStep, SchemaExtension
 from strawberry.extensions.tracing.utils import should_skip_tracing
 
-from ._metrics import LIFECYCLE_STEP_DURATION, OPERATION_DURATION, RESOLVE_DURATION
+from ._metrics import LIFECYCLE_STEP_DURATION, OPERATION_DURATION
 
 if TYPE_CHECKING:
     from graphql import GraphQLResolveInfo
@@ -92,8 +92,6 @@ class PrometheusExtension(SchemaExtension):
 
             return result
 
-        field_path = f"{info.parent_type}.{info.field_name}"
-
         start_time = time.perf_counter()
 
         result = _next(root, info, *args, **kwargs)
@@ -103,12 +101,6 @@ class PrometheusExtension(SchemaExtension):
 
         duration = time.perf_counter() - start_time
 
-        RESOLVE_DURATION.labels(
-            field_name=info.field_name,
-            parent_type=info.parent_type.name,
-            field_path=field_path,
-            path=".".join(map(str, info.path.as_list())),
-        ).observe(duration)
         LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.RESOLVE).observe(
             duration
         )
@@ -128,20 +120,12 @@ class PrometheusExtensionSync(PrometheusExtension):
         if should_skip_tracing(_next, info):
             return _next(root, info, *args, **kwargs)
 
-        field_path = f"{info.parent_type}.{info.field_name}"
-
         start_time = time.perf_counter()
 
         result = _next(root, info, *args, **kwargs)
 
         duration = time.perf_counter() - start_time
 
-        RESOLVE_DURATION.labels(
-            field_name=info.field_name,
-            parent_type=info.parent_type.name,
-            field_path=field_path,
-            path=".".join(map(str, info.path.as_list())),
-        ).observe(duration)
         LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.RESOLVE).observe(
             duration
         )
