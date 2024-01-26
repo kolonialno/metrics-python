@@ -3,9 +3,10 @@ from typing import Callable
 from django.http import HttpRequest, HttpResponse
 
 from ._metrics import (
-    DUPLICATE_QUERY_COUNT_BY_VIEW,
-    QUERY_COUNT_BY_VIEW,
-    QUERY_DURATION_BY_VIEW,
+    VIEW_DUPLICATE_QUERY_COUNT,
+    VIEW_QUERY_COUNT,
+    VIEW_QUERY_DURATION,
+    VIEW_QUERY_REQUESTS_COUNT,
 )
 from ._query_counter import QueryCounter
 from ._utils import get_request_method, get_view_name
@@ -25,22 +26,24 @@ class QueryCountMiddleware:
 
             labels = {"method": method, "view": view, "status": status}
 
-            for (
-                db,
-                query_count,
-            ) in counter.get_total_query_count_by_alias().items():
-                QUERY_COUNT_BY_VIEW.labels(db=db, **labels).inc(query_count)
+            VIEW_QUERY_REQUESTS_COUNT.labels(**labels).inc()
 
             for (
                 db,
                 query_duration,
             ) in counter.get_total_query_duration_seconds_by_alias().items():
-                QUERY_DURATION_BY_VIEW.labels(db=db, **labels).inc(query_duration)
+                VIEW_QUERY_DURATION.labels(db=db, **labels).observe(query_duration)
+
+            for (
+                db,
+                query_count,
+            ) in counter.get_total_query_count_by_alias().items():
+                VIEW_QUERY_COUNT.labels(db=db, **labels).inc(query_count)
 
             for (
                 db,
                 query_count,
             ) in counter.get_total_duplicate_query_count_by_alias().items():
-                DUPLICATE_QUERY_COUNT_BY_VIEW.labels(db=db, **labels).inc(query_count)
+                VIEW_DUPLICATE_QUERY_COUNT.labels(db=db, **labels).inc(query_count)
 
             return response
