@@ -1,17 +1,19 @@
-from prometheus_client import Counter
+from prometheus_client import Counter, Histogram
 
 from ..constants import NAMESPACE
 
-QUERY_COUNT_BY_VIEW = Counter(
-    "query_count_by_view",
-    "Number of database queries executed by views.",
-    ["db", "method", "view", "status"],
+# This counter is used to calculate the average number of
+# sql queries executed by a view.
+VIEW_QUERY_REQUESTS_COUNT = Counter(
+    "view_query_request_count",
+    "Number of requests sent to a view.",
+    ["method", "view", "status"],
     namespace=NAMESPACE,
     subsystem="django",
 )
 
-QUERY_DURATION_BY_VIEW = Counter(
-    "query_duration_by_view",
+VIEW_QUERY_DURATION = Histogram(
+    "view_query_duration",
     "Database query duration by views.",
     ["db", "method", "view", "status"],
     unit="seconds",
@@ -19,8 +21,16 @@ QUERY_DURATION_BY_VIEW = Counter(
     subsystem="django",
 )
 
-DUPLICATE_QUERY_COUNT_BY_VIEW = Counter(
-    "duplicate_query_count_by_view",
+VIEW_QUERY_COUNT = Counter(
+    "view_query_count",
+    "Number of database queries executed by views.",
+    ["db", "method", "view", "status"],
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+VIEW_DUPLICATE_QUERY_COUNT = Counter(
+    "view_duplicate_query_count",
     "Number of duplicate database queries executed by views.",
     ["db", "method", "view", "status"],
     namespace=NAMESPACE,
