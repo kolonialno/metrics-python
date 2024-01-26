@@ -23,6 +23,22 @@ from metrics_python.generics.info import expose_application_info
 expose_application_info(version="your-application-version")
 ```
 
+## Django
+
+### Query count and duration in views
+
+Database query count, duration, and duplicate queries can be observed
+by adding the `QueryCountMiddleware`. Add the middleware as early as
+possible in the list of middlewares to observe queries executed by
+other middlewares.
+
+```python
+MIDDLEWARE = [
+    ...
+    "metrics_python.django.QueryCountMiddleware",
+]
+```
+
 ## Celery
 
 To setup Celery monitoring, import and execute `setup_celery_metrics` as early
@@ -42,7 +58,7 @@ To measure request durations to views served by django-api-decorator, add the `D
 ```python
 MIDDLEWARE = [
     ...
-     "metrics_python.django_api_decorator.DjangoAPIDecoratorMetricsMiddleware",
+    "metrics_python.django_api_decorator.DjangoAPIDecoratorMetricsMiddleware",
 ]
 ```
 
