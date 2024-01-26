@@ -78,11 +78,11 @@ class QueryCounter:
         return self.query_count
 
     def get_total_query_duration_seconds(self) -> float:
-        return self.duration_count.total() / 10.0**-9
+        return self.duration_count.total() / 10.0**9
 
     def get_total_query_duration_seconds_by_alias(self) -> dict[str, float]:
         return {
-            alias: duration / 10.0**-9
+            alias: duration / 10.0**9
             for alias, duration in self.duration_count.items()
         }
 
