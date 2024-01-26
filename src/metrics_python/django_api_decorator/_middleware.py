@@ -23,7 +23,7 @@ class DjangoAPIDecoratorMetricsMiddleware:
 
             method = get_request_method(request)
             view = get_view_name(request)
-            status = response.status_code
+            status = str(response.status_code)
 
             VIEW_DURATION.labels(method=method, view=view, status=status).observe(
                 view_duration

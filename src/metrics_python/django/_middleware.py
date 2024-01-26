@@ -1,0 +1,46 @@
+from typing import Callable
+
+from django.http import HttpRequest, HttpResponse
+
+from ._metrics import (
+    DUPLICATE_QUERY_COUNT_BY_VIEW,
+    QUERY_COUNT_BY_VIEW,
+    QUERY_DURATION_BY_VIEW,
+)
+from ._query_counter import QueryCounter
+from ._utils import get_request_method, get_view_name
+
+
+class QueryCountMiddleware:
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        with QueryCounter.create_as_current() as counter:
+            response = self.get_response(request)
+
+            method = get_request_method(request)
+            view = get_view_name(request)
+            status = str(response.status_code)
+
+            labels = {"method": method, "view": view, "status": status}
+
+            for (
+                db,
+                query_count,
+            ) in counter.get_total_query_count_by_alias().items():
+                QUERY_COUNT_BY_VIEW.labels(db=db, **labels).inc(query_count)
+
+            for (
+                db,
+                query_duration,
+            ) in counter.get_total_query_duration_seconds_by_alias().items():
+                QUERY_DURATION_BY_VIEW.labels(db=db, **labels).inc(query_duration)
+
+            for (
+                db,
+                query_count,
+            ) in counter.get_total_duplicate_query_count_by_alias().items():
+                DUPLICATE_QUERY_COUNT_BY_VIEW.labels(db=db, **labels).inc(query_count)
+
+            return response
