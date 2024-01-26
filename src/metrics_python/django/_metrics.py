@@ -12,7 +12,7 @@ QUERY_COUNT_BY_VIEW = Counter(
 
 QUERY_DURATION_BY_VIEW = Counter(
     "query_duration_by_view",
-    "Number of database queries executed by views.",
+    "Database query duration by views.",
     ["db", "method", "view", "status"],
     unit="seconds",
     namespace=NAMESPACE,
