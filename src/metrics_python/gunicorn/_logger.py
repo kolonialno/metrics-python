@@ -7,7 +7,6 @@ from gunicorn.http.message import Request
 from gunicorn.http.wsgi import Response
 
 from ._metrics import (
-    ACTIVE_WORKER_SECONDS,
     ACTIVE_WORKERS,
     LOG_RECORDS,
     REQUEST_DURATION,
@@ -83,4 +82,3 @@ class Prometheus(Logger):  # type: ignore
         REQUEST_DURATION.labels(status=status, worker=worker_pid).observe(
             duration_in_seconds
         )
-        ACTIVE_WORKER_SECONDS.inc(duration_in_seconds)

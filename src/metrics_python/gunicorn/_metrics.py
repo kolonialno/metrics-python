@@ -26,10 +26,3 @@ ACTIVE_WORKERS = Gauge(
     namespace=NAMESPACE,
     subsystem="gunicorn",
 )
-
-ACTIVE_WORKER_SECONDS = Counter(
-    "active_worker_seconds",
-    "Total worker-seconds spent processing requests",
-    namespace=NAMESPACE,
-    subsystem="gunicorn",
-)
