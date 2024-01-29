@@ -23,30 +23,26 @@ class Prometheus(Logger):  # type: ignore
     """
 
     def critical(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        super().critical(*args, **kwargs)
         self._handle_log("critical", msg, *args, **kwargs)
 
     def error(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        super().error(*args, **kwargs)
         self._handle_log("error", msg, *args, **kwargs)
 
     def warning(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        super().warning(*args, **kwargs)
         self._handle_log("warning", msg, *args, **kwargs)
 
     def exception(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        super().exception(*args, **kwargs)
         self._handle_log("exception", msg, *args, **kwargs)
 
     def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        super().info(*args, **kwargs)
         self._handle_log("info", msg, *args, **kwargs)
 
     def debug(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        super().debug(*args, **kwargs)
         self._handle_log("debug", msg, *args, **kwargs)
 
-    def _handle_log(self, method_name: str, msg: Any, *args: Any, **kwargs: Any):
+    def _handle_log(
+        self, method_name: str, msg: Any, *args: Any, **kwargs: Any
+    ) -> None:
         logfunc = getattr(Logger, method_name)
         logfunc(self, msg, *args, **kwargs)
 
@@ -60,10 +56,12 @@ class Prometheus(Logger):  # type: ignore
                 mtype=extra.get("mtype"),
             )
 
-    def _handle_metric(self, *, metric, value, mtype):
+    def _handle_metric(self, *, metric: Any, value: Any, mtype: Any) -> None:
         if not (metric and value and mtype):
             return
 
+        # gunicorn.workers: number of workers managed by the arbiter (gauge)
+        # https://docs.gunicorn.org/en/stable/instrumentation.html
         if metric == "gunicorn.workers":
             assert mtype == "gauge"
             ACTIVE_WORKERS.set(value)
