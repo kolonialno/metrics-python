@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "metrics-python"
-version = "0.0.6a3"
+version = "0.0.6"
 description = "Generic set of metrics for Python applications."
 authors = ["Eirik Martiniussen Sylliaas <eirik@sylliaas.no>"]
 readme = "README.md"
@@ -87,7 +87,7 @@ extend-exclude = 'migrations'
 safe = true
 
 [tool.pytest.ini_options]
-testpaths = ["metrics_python"]
+testpaths = ["src/metrics_python"]
 # Include captured log messages in system-out in CI report file
 junit_logging = "system-out"
 markers = [ ]
