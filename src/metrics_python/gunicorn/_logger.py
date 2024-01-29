@@ -83,6 +83,7 @@ class Prometheus(Logger):  # type: ignore
 
         duration_in_seconds = request_time.total_seconds()
 
-        REQUEST_DURATION.labels(status=status).observe(duration_in_seconds)
+        REQUEST_DURATION.labels(status=status, worker=worker_pid).observe(
+            duration_in_seconds
+        )
         ACTIVE_WORKER_SECONDS.inc(duration_in_seconds)
-        REQUESTS_HANDLED_BY_WORKER.labels(worker=worker_pid).inc()

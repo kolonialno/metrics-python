@@ -5,7 +5,7 @@ from ..constants import NAMESPACE
 REQUEST_DURATION = Histogram(
     "request_duration",
     "Time spent on processing a request in Gunicorn",
-    ["status"],
+    ["status", "worker"],
     unit="seconds",
     namespace=NAMESPACE,
     subsystem="gunicorn",
@@ -19,14 +19,6 @@ LOG_RECORDS = Counter(
     subsystem="gunicorn",
 )
 
-
-REQUESTS_HANDLED_BY_WORKER = Counter(
-    "requests_by_worker",
-    "The number of requests handled by gunicorn worker",
-    ["worker"],
-    namespace=NAMESPACE,
-    subsystem="gunicorn",
-)
 
 ACTIVE_WORKERS = Gauge(
     "workers",
