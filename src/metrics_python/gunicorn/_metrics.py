@@ -1,4 +1,4 @@
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Gauge, Histogram
 
 from ..constants import NAMESPACE
 
@@ -15,6 +15,29 @@ LOG_RECORDS = Counter(
     "log_records",
     "The number of log records emitted by Gunicorn.",
     ["level"],
+    namespace=NAMESPACE,
+    subsystem="gunicorn",
+)
+
+
+REQUESTS_HANDLED_BY_WORKER = Counter(
+    "requests_by_worker",
+    "The number of requests handled by gunicorn worker",
+    ["worker"],
+    namespace=NAMESPACE,
+    subsystem="gunicorn",
+)
+
+ACTIVE_WORKERS = Gauge(
+    "workers",
+    "Active gunicorn workers",
+    namespace=NAMESPACE,
+    subsystem="gunicorn",
+)
+
+ACTIVE_WORKER_SECONDS = Counter(
+    "active_worker_seconds",
+    "Total worker-seconds spent processing requests",
     namespace=NAMESPACE,
     subsystem="gunicorn",
 )
