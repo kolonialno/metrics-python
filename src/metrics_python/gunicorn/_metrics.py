@@ -5,7 +5,7 @@ from ..constants import NAMESPACE
 REQUEST_DURATION = Histogram(
     "request_duration",
     "Time spent on processing a request in Gunicorn",
-    ["status", "worker"],
+    ["status", "worker_pid"],
     unit="seconds",
     namespace=NAMESPACE,
     subsystem="gunicorn",
