@@ -46,7 +46,7 @@ class Prometheus(Logger):  # type: ignore
         super().debug(*args, **kwargs)
         self._handle_log("debug", msg, *args, **kwargs)
 
-    def _handle_log(self, method_name, msg, *args, **kwargs):
+    def _handle_log(self, method_name: str, msg: Any, *args: Any, **kwargs: Any):
         logfunc = getattr(Logger, method_name)
         logfunc(self, msg, *args, **kwargs)
 
