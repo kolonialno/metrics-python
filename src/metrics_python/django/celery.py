@@ -69,7 +69,7 @@ def _measure_task(*, task: Any, counter: QueryCounter) -> None:
 def _wrap_task_call(task: Any, f: Any) -> Any:
     @wraps(f)
     def _inner(*args: Any, **kwargs: Any) -> Any:
-        # We dont enable the query counter it Celery is running in eager mode,
+        # We don't enable the query counter if Celery is running in eager mode,
         # the request middleware is most likely in place already.
         if getattr(task.request, "is_eager", False):
             return f(*args, **kwargs)
