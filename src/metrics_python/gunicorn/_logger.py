@@ -11,7 +11,6 @@ from ._metrics import (
     ACTIVE_WORKERS,
     LOG_RECORDS,
     REQUEST_DURATION,
-    REQUESTS_HANDLED_BY_WORKER,
 )
 
 
@@ -22,29 +21,27 @@ class Prometheus(Logger):  # type: ignore
     This is equivalent to the StatsD implementation from Gunicorn.
     """
 
-    def critical(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        self._handle_log("critical", msg, *args, **kwargs)
+    def critical(self, *args: Any, **kwargs: Any) -> None:
+        self._handle_log("critical", *args, **kwargs)
 
-    def error(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        self._handle_log("error", msg, *args, **kwargs)
+    def error(self, *args: Any, **kwargs: Any) -> None:
+        self._handle_log("error", *args, **kwargs)
 
-    def warning(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        self._handle_log("warning", msg, *args, **kwargs)
+    def warning(self, *args: Any, **kwargs: Any) -> None:
+        self._handle_log("warning", *args, **kwargs)
 
-    def exception(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        self._handle_log("exception", msg, *args, **kwargs)
+    def exception(self, *args: Any, **kwargs: Any) -> None:
+        self._handle_log("exception", *args, **kwargs)
 
-    def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        self._handle_log("info", msg, *args, **kwargs)
+    def info(self, *args: Any, **kwargs: Any) -> None:
+        self._handle_log("info", *args, **kwargs)
 
-    def debug(self, msg: Any, *args: Any, **kwargs: Any) -> None:
-        self._handle_log("debug", msg, *args, **kwargs)
+    def debug(self, *args: Any, **kwargs: Any) -> None:
+        self._handle_log("debug", *args, **kwargs)
 
-    def _handle_log(
-        self, method_name: str, msg: Any, *args: Any, **kwargs: Any
-    ) -> None:
+    def _handle_log(self, method_name: str, *args: Any, **kwargs: Any) -> None:
         logfunc = getattr(Logger, method_name)
-        logfunc(self, msg, *args, **kwargs)
+        logfunc(self, *args, **kwargs)
 
         LOG_RECORDS.labels(level=method_name).inc()
 
