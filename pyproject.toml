@@ -69,7 +69,6 @@ combine-as-imports = true
 
 [tool.mypy]
 python_version = "3.12"
-plugins = ["strawberry.ext.mypy_plugin"]
 strict = true
 ignore_missing_imports = true
 
