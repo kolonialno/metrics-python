@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from celery.app.trace import task_has_custom
 
@@ -9,7 +9,9 @@ from ._metrics import (
     CELERY_QUERY_DURATION,
     CELERY_QUERY_REQUESTS_COUNT,
 )
-from ._query_counter import QueryCounter
+
+if TYPE_CHECKING:
+    from ._query_counter import QueryCounter
 
 
 def setup_celery_database_metrics() -> None:
@@ -42,7 +44,7 @@ def setup_celery_database_metrics() -> None:
     trace.build_tracer = metrics_python_build_tracer
 
 
-def _measure_task(*, task: Any, counter: QueryCounter) -> None:
+def _measure_task(*, task: Any, counter: "QueryCounter") -> None:
     labels = {"task": task.name}
 
     CELERY_QUERY_REQUESTS_COUNT.labels(**labels).inc()
@@ -73,6 +75,8 @@ def _wrap_task_call(task: Any, f: Any) -> Any:
         # the request middleware is most likely in place already.
         if getattr(task.request, "is_eager", False):
             return f(*args, **kwargs)
+
+        from ._query_counter import QueryCounter
 
         # Initialize the query counter and measure the result after the task
         # is complete.
