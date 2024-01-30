@@ -39,6 +39,18 @@ MIDDLEWARE = [
 ]
 ```
 
+### Query count and duration in Celery tasks
+
+Database metrics can also be observed in Celery. Execute
+`setup_celery_database_metrics` bellow `setup_celery_metrics`,
+look into the Celery section of this document for more information.
+
+```python
+from metrics_python.django.celery import setup_celery_database_metrics
+
+setup_celery_database_metrics()
+```
+
 ## Celery
 
 To setup Celery monitoring, import and execute `setup_celery_metrics` as early
