@@ -3,6 +3,28 @@ from prometheus_client import Counter, Histogram
 from ..constants import NAMESPACE
 
 #
+# Cache
+#
+
+CACHE_CALL_DURATION = Histogram(
+    "cache_call_duration",
+    "Cache call duration by method and alias.",
+    ["alias", "method"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+CACHE_CALL_GETS_DURATION = Histogram(
+    "cache_call_gets_duration",
+    "Cache call duration for get requests by cache hit, alias and method.",
+    ["alias", "method", "hit"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+#
 # Django view query counts
 #
 

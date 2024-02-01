@@ -560,6 +560,24 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
+name = "pytest-django"
+version = "4.8.0"
+description = "A Django plugin for pytest."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-django-4.8.0.tar.gz", hash = "sha256:5d054fe011c56f3b10f978f41a8efb2e5adfc7e680ef36fb571ada1f24779d90"},
+    {file = "pytest_django-4.8.0-py3-none-any.whl", hash = "sha256:ca1ddd1e0e4c227cf9e3e40a6afc6d106b3e70868fd2ac5798a22501271cd0c7"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0"
+
+[package.extras]
+docs = ["sphinx", "sphinx-rtd-theme"]
+testing = ["Django", "django-configurations (>=2.0)"]
+
+[[package]]
 name = "pytest-env"
 version = "1.1.3"
 description = "pytest plugin that allows you to add environment variables."
@@ -789,4 +807,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">= 3.11, < 3.13"
-content-hash = "76c7c04107d5e8fa026b61763c3a115bdac5346c447c33c101ac9f1bfdb32bc3"
+content-hash = "684804b92c1609fb31dab25ddaf409c7d292cb6c70ecb0eae7569e2c02651d6b"

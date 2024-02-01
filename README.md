@@ -25,6 +25,16 @@ expose_application_info(version="your-application-version")
 
 ## Django
 
+### Cache
+
+Cache metrics can be observed by adding `patch_caching()` to your settings file.
+
+```python
+from metrics_python.django import patch_caching
+
+patch_caching()
+```
+
 ### Query count and duration in views
 
 Database query count, duration, and duplicate queries can be observed

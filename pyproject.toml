@@ -25,6 +25,7 @@ pytest-mock = "^3.12.0"
 pytest-socket = "^0.6.0"
 pytest-xdist = "^3.5.0"
 pytest-lazy-fixture = "^0.6.3"
+pytest-django = "^4.8.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -91,6 +92,8 @@ testpaths = ["src/metrics_python"]
 # Include captured log messages in system-out in CI report file
 junit_logging = "system-out"
 markers = [ ]
+# --- pytest-django settings
+DJANGO_SETTINGS_MODULE = "metrics_python.django.tests.settings"
 # --- pytest-env settings
 env = ["ENV_PATH=.env.test"]
 
