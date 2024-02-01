@@ -2,11 +2,10 @@ import functools
 import time
 from typing import TYPE_CHECKING, Any
 
-from django.core.cache import CacheHandler
-
 from ._metrics import CACHE_CALL_DURATION, CACHE_CALL_GETS_DURATION
 
 if TYPE_CHECKING:
+    from django.core.cache import CacheHandler
     from django.core.cache.backends.base import BaseCache
 
 METHODS_TO_INSTRUMENT = [
@@ -68,16 +67,18 @@ def patch_caching() -> None:
     Patch cache handler to observe cache calls.
     """
 
-    if not hasattr(CacheHandler, "_metrics_python_is_patched"):
-        original_create_connection = CacheHandler.create_connection
+    from django.core import cache
+
+    if not hasattr(cache.CacheHandler, "_metrics_python_is_patched"):
+        original_create_connection = cache.CacheHandler.create_connection
 
         @functools.wraps(original_create_connection)
-        def create_connection(self: CacheHandler, alias: Any) -> Any:
+        def create_connection(self: "CacheHandler", alias: Any) -> Any:
             cache: "BaseCache" = original_create_connection(self, alias)
 
             _patch_cache(cache, alias)
 
             return cache
 
-        CacheHandler.create_connection = create_connection
-        CacheHandler._metrics_python_is_patched = True
+        cache.CacheHandler.create_connection = create_connection
+        cache.CacheHandler._metrics_python_is_patched = True
