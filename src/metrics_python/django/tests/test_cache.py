@@ -1,6 +1,6 @@
 from prometheus_client import REGISTRY
 
-from metrics_python.django import patch_caching
+from metrics_python.django.cache import patch_caching
 
 
 def test_patch_cache() -> None:

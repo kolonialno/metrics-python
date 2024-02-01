@@ -30,7 +30,7 @@ expose_application_info(version="your-application-version")
 Cache metrics can be observed by adding `patch_caching()` to your settings file.
 
 ```python
-from metrics_python.django import patch_caching
+from metrics_python.django.cache import patch_caching
 
 patch_caching()
 ```
@@ -45,7 +45,7 @@ other middlewares.
 ```python
 MIDDLEWARE = [
     ...
-    "metrics_python.django.QueryCountMiddleware",
+    "metrics_python.django.middleware.QueryCountMiddleware",
 ]
 ```
 
