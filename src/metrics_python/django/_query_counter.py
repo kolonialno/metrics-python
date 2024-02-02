@@ -43,7 +43,7 @@ class QueryCounter:
     ) -> Any:
         alias = context["connection"].alias
 
-        if settings.OBSERVE_DUBLICATE_QUERIES:
+        if settings.OBSERVE_DUPLICATE_QUERIES:
             stack = list(reversed(list(traceback.walk_stack(None))))
 
             # StackSummary is used for comparison (have we seen this stack
