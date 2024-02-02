@@ -43,16 +43,8 @@ class QueryCounter:
     ) -> Any:
         alias = context["connection"].alias
 
-        stack = list(reversed(list(traceback.walk_stack(None))))
-
-        try:
-            start = time.perf_counter_ns()
-            return execute(sql, params, many, context)
-        finally:
-            duration = time.perf_counter_ns() - start
-
-            self.query_count[alias] += 1
-            self.duration_count[alias] += duration
+        if settings.OBSERVE_DUBLICATE_QUERIES:
+            stack = list(reversed(list(traceback.walk_stack(None))))
 
             # StackSummary is used for comparison (have we seen this stack
             # before?).
@@ -70,6 +62,15 @@ class QueryCounter:
 
                 if settings.PRINT_DUPLICATE_QUERIES:
                     self.stacks.append(stack)
+
+        try:
+            start = time.perf_counter_ns()
+            return execute(sql, params, many, context)
+        finally:
+            duration = time.perf_counter_ns() - start
+
+            self.query_count[alias] += 1
+            self.duration_count[alias] += duration
 
     def get_total_query_count(self) -> int:
         return self.query_count.total()
