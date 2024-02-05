@@ -1,5 +1,4 @@
 import asyncio
-import time
 from contextvars import ContextVar
 from functools import wraps
 from typing import Any, Callable, Coroutine, cast
@@ -131,15 +130,12 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
 
     def _get_wrapped_method(old_method: Any) -> Any:
         def metrics_python_wrapped_method(*args: Any, **kwargs: Any) -> Any:
-            middleware_method = _middleware_method(old_method)
+            method_name = _middleware_method(old_method)
 
-            start = time.perf_counter()
-            value = old_method(*args, **kwargs)
-            duration = time.perf_counter() - start
-
-            print(middleware_name, middleware_method, duration)
-
-            return value
+            with MIDDLEWARE_DURATION.labels(
+                middleware=middleware_name, method=method_name
+            ).time():
+                return old_method(*args, **kwargs)
 
         return wraps(old_method)(metrics_python_wrapped_method)
 
