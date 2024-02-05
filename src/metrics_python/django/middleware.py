@@ -1,10 +1,13 @@
 import asyncio
+from contextvars import ContextVar
+from functools import wraps
 from typing import Any, Callable, Coroutine, cast
 
 from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import sync_and_async_middleware
 
 from ._metrics import (
+    MIDDLEWARE_DURATION,
     VIEW_DUPLICATE_QUERY_COUNT,
     VIEW_QUERY_COUNT,
     VIEW_QUERY_DURATION,
@@ -16,8 +19,17 @@ from ._utils import get_request_method, get_view_name
 MIDDLEWARE = Callable[[HttpRequest], HttpResponse]
 ASYNC_MIDDLEWARE = Callable[[HttpRequest], Coroutine[Any, Any, HttpResponse]]
 
+_import_string_should_wrap_middleware: ContextVar[bool] = ContextVar(
+    "import_string_should_wrap_middleware"
+)
 
-def measure_request(
+
+#
+# Request query counter
+#
+
+
+def _measure_request(
     *, request: HttpRequest, response: HttpResponse, counter: QueryCounter
 ) -> None:
     method = get_request_method(request)
@@ -56,7 +68,7 @@ def QueryCountMiddleware(
         async def async_middleware(request: HttpRequest) -> HttpResponse:
             with QueryCounter.create_as_current() as counter:
                 response = await cast(ASYNC_MIDDLEWARE, get_response)(request)
-                measure_request(request=request, response=response, counter=counter)
+                _measure_request(request=request, response=response, counter=counter)
 
                 return response
 
@@ -65,8 +77,143 @@ def QueryCountMiddleware(
     def middleware(request: HttpRequest) -> HttpResponse:
         with QueryCounter.create_as_current() as counter:
             response = cast(MIDDLEWARE, get_response)(request)
-            measure_request(request=request, response=response, counter=counter)
+            _measure_request(request=request, response=response, counter=counter)
 
             return response
 
     return middleware
+
+
+#
+# Middleware observability
+#
+
+
+def patch_middlewares() -> None:
+    from django.core.handlers import base
+
+    old_import_string = base.import_string
+
+    def metrics_python_patched_import_string(dotted_path: str) -> Any:
+        rv = old_import_string(dotted_path)
+
+        if _import_string_should_wrap_middleware.get(None):
+            rv = _wrap_middleware(rv, dotted_path)
+
+        return rv
+
+    base.import_string = metrics_python_patched_import_string
+
+    old_load_middleware = base.BaseHandler.load_middleware
+
+    def metrics_python_patched_load_middleware(*args: Any, **kwargs: Any) -> Any:
+        _import_string_should_wrap_middleware.set(True)
+        try:
+            return old_load_middleware(*args, **kwargs)
+        finally:
+            _import_string_should_wrap_middleware.set(False)
+
+    base.BaseHandler.load_middleware = metrics_python_patched_load_middleware
+
+
+def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
+    def _middleware_method(old_method: Any) -> str:
+        """
+        Return middleware method.
+        """
+
+        function_basename = getattr(old_method, "__name__", None)
+        if not function_basename:
+            return "<unnamed method>"
+
+        return str(function_basename)
+
+    def _get_wrapped_method(old_method: Any) -> Any:
+        def metrics_python_wrapped_method(*args: Any, **kwargs: Any) -> Any:
+            method_name = _middleware_method(old_method)
+
+            with MIDDLEWARE_DURATION.labels(
+                middleware=middleware_name, method=method_name
+            ).time():
+                return old_method(*args, **kwargs)
+
+        return wraps(old_method)(metrics_python_wrapped_method)
+
+    class MetricsPythonWrappingMiddleware:
+        async_capable = getattr(middleware, "async_capable", False)
+
+        def __init__(self, get_response: Any = None, *args: Any, **kwargs: Any) -> None:
+            if get_response:
+                self._inner = middleware(get_response, *args, **kwargs)
+            else:
+                self._inner = middleware(*args, **kwargs)
+
+            self.get_response = get_response
+
+            self._call_method = None
+            self._acall_method = None
+
+            if self.async_capable:
+                self._async_check()
+
+        def _async_check(self) -> None:
+            if asyncio.iscoroutinefunction(self.get_response):
+                self._is_coroutine = asyncio.coroutines._is_coroutine  # type: ignore
+
+        def async_route_check(self) -> bool:
+            return asyncio.iscoroutinefunction(self.get_response)
+
+        def __getattr__(self, method_name: str) -> Any:
+            if method_name not in (
+                "process_request",
+                "process_view",
+                "process_template_response",
+                "process_response",
+                "process_exception",
+            ):
+                raise AttributeError()
+
+            old_method = getattr(self._inner, method_name)
+            rv = _get_wrapped_method(old_method)
+            self.__dict__[method_name] = rv
+            return rv
+
+        def __call__(self, *args: Any, **kwargs: Any) -> Any:
+            if self.async_route_check():
+                return self.__acall__(*args, **kwargs)
+
+            f = self._call_method
+            if f is None:
+                self._call_method = f = self._inner.__call__
+
+            method_name = _middleware_method(old_method=f)
+
+            with MIDDLEWARE_DURATION.labels(
+                middleware=middleware_name, method=method_name
+            ).time():
+                return f(*args, **kwargs)
+
+        async def __acall__(self, *args: Any, **kwargs: Any) -> Any:
+            f = self._acall_method
+            if f is None:
+                if hasattr(self._inner, "__acall__"):
+                    self._acall_method = f = self._inner.__acall__
+                else:
+                    self._acall_method = f = self._inner
+
+            method_name = _middleware_method(old_method=f)
+
+            with MIDDLEWARE_DURATION.labels(
+                middleware=middleware_name, method=method_name
+            ).time():
+                return await f(*args, **kwargs)
+
+    for attr in (
+        "__name__",
+        "__module__",
+        "__qualname__",
+    ):
+        if hasattr(middleware, attr):
+            setattr(MetricsPythonWrappingMiddleware, attr, getattr(middleware, attr))
+
+    return MetricsPythonWrappingMiddleware
