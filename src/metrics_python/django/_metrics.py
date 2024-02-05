@@ -101,3 +101,17 @@ CELERY_DUPLICATE_QUERY_COUNT = Counter(
     namespace=NAMESPACE,
     subsystem="django",
 )
+
+
+#
+# Signals
+#
+
+SIGNAL_DURATION = Histogram(
+    "signal_duration",
+    "Time spent on signals.",
+    ["signal"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="django",
+)
