@@ -115,3 +115,17 @@ SIGNAL_DURATION = Histogram(
     namespace=NAMESPACE,
     subsystem="django",
 )
+
+#
+# Middleware
+#
+
+
+MIDDLEWARE_DURATION = Histogram(
+    "middleware_duration",
+    "Time spent on middleware methods.",
+    ["middleware", "method"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="django",
+)
