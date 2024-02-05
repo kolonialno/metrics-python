@@ -35,6 +35,26 @@ from metrics_python.django.cache import patch_caching
 patch_caching()
 ```
 
+### Middleware
+
+The execution of middlewares can be observed by adding `patch_middlewares()` to your settings file.
+
+```python
+from metrics_python.django.middleware import patch_middlewares
+
+patch_middlewares()
+```
+
+### Signals
+
+The execution of signals can be observed by adding `patch_signals()` to your settings file.
+
+```python
+from metrics_python.django.signals import patch_signals
+
+patch_signals()
+```
+
 ### Query count and duration in views
 
 Database query count, duration, and duplicate queries can be observed
