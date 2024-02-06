@@ -1,4 +1,4 @@
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, Summary
 
 from ..constants import NAMESPACE
 
@@ -59,6 +59,46 @@ VIEW_DUPLICATE_QUERY_COUNT = Counter(
     "view_duplicate_query_count",
     "Number of duplicate database queries executed by views.",
     ["db", "method", "view", "status"],
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+
+#
+# Django management command query counts
+#
+
+# This counter is used to calculate the average number of
+# sql queries executed by a management comand.
+MANAGEMENT_COMMAND_QUERY_REQUESTS_COUNT = Counter(
+    "management_command_query_request_count",
+    "Number of requests sent to a management command.",
+    ["command"],
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+MANAGEMENT_COMMAND_QUERY_DURATION = Histogram(
+    "management_command_query_duration",
+    "Database query duration by management commands.",
+    ["db", "command"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+MANAGEMENT_COMMAND_QUERY_COUNT = Counter(
+    "management_command_query_count",
+    "Number of database queries executed by management commands.",
+    ["db", "command"],
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+MANAGEMENT_COMMAND_DUPLICATE_QUERY_COUNT = Counter(
+    "management_command_duplicate_query_count",
+    "Number of duplicate database queries executed by management commands.",
+    ["db", "command"],
     namespace=NAMESPACE,
     subsystem="django",
 )
@@ -125,6 +165,19 @@ MIDDLEWARE_DURATION = Histogram(
     "middleware_duration",
     "Time spent on middleware methods.",
     ["middleware", "method"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="django",
+)
+
+#
+# Management commands
+#
+
+MANAGEMENT_COMMAND_DURATION = Summary(
+    "management_command_duration",
+    "Django management command execution duration.",
+    ["command"],
     unit="seconds",
     namespace=NAMESPACE,
     subsystem="django",
