@@ -1,7 +1,7 @@
 import asyncio
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any, Callable, Coroutine, cast
+from typing import Any, Callable, ContextManager, Coroutine, cast
 
 from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import sync_and_async_middleware
@@ -128,16 +128,31 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
 
         return str(function_basename)
 
-    def _get_wrapped_method(old_method: Any) -> Any:
-        def metrics_python_wrapped_method(*args: Any, **kwargs: Any) -> Any:
-            method_name = _middleware_method(old_method)
+    def _middleware_timer(old_method: Any) -> ContextManager[None]:
+        """
+        Return a generator that is used to measure the method execution duration.
+        """
 
-            with MIDDLEWARE_DURATION.labels(
-                middleware=middleware_name, method=method_name
-            ).time():
+        method_name = _middleware_method(old_method)
+
+        return MIDDLEWARE_DURATION.labels(
+            middleware=middleware_name, method=method_name
+        ).time()
+
+    def _get_wrapped_method(old_method: Any) -> Any:
+        """
+        Wrap decorator method to mesure execution duration.
+        """
+
+        def metrics_python_wrapped_method(*args: Any, **kwargs: Any) -> Any:
+            with _middleware_timer(old_method=old_method):
                 return old_method(*args, **kwargs)
 
-        return wraps(old_method)(metrics_python_wrapped_method)
+        wrapped_method = wraps(old_method)(metrics_python_wrapped_method)
+        # Django compat.
+        wrapped_method.__self__ = old_method.__self__  # type: ignore
+
+        return wrapped_method
 
     class MetricsPythonWrappingMiddleware:
         async_capable = getattr(middleware, "async_capable", False)
@@ -186,11 +201,7 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
             if f is None:
                 self._call_method = f = self._inner.__call__
 
-            method_name = _middleware_method(old_method=f)
-
-            with MIDDLEWARE_DURATION.labels(
-                middleware=middleware_name, method=method_name
-            ).time():
+            with _middleware_timer(old_method=f):
                 return f(*args, **kwargs)
 
         async def __acall__(self, *args: Any, **kwargs: Any) -> Any:
@@ -201,11 +212,7 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
                 else:
                     self._acall_method = f = self._inner
 
-            method_name = _middleware_method(old_method=f)
-
-            with MIDDLEWARE_DURATION.labels(
-                middleware=middleware_name, method=method_name
-            ).time():
+            with _middleware_timer(old_method=f):
                 return await f(*args, **kwargs)
 
     for attr in (
