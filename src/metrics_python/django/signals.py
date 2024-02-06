@@ -1,4 +1,3 @@
-import time
 from functools import wraps
 from typing import Any, Callable
 
@@ -43,13 +42,8 @@ def patch_signals() -> None:
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 signal = _get_receiver_name(receiver)
 
-                start = time.perf_counter()
-                value = receiver(*args, **kwargs)
-                duration = time.perf_counter() - start
-
-                SIGNAL_DURATION.labels(signal=signal).observe(duration)
-
-                return value
+                with SIGNAL_DURATION.labels(signal=signal).time():
+                    return receiver(*args, **kwargs)
 
             return wrapper
 
