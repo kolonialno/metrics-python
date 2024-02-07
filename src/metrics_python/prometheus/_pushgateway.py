@@ -1,5 +1,5 @@
 import contextlib
-from typing import Generator
+from typing import Any, Generator
 from urllib.error import URLError
 
 from prometheus_client import REGISTRY, CollectorRegistry, push_to_gateway
@@ -10,6 +10,7 @@ def push_metrics(
     *,
     registry: CollectorRegistry = REGISTRY,
     job: str | None = None,
+    grouping_key: dict[str, Any] | None = None,
     gateway: str | None = None,
     timeout: int = 5,
 ) -> Generator[None, None, None]:
@@ -42,6 +43,7 @@ def push_metrics(
             push_to_gateway(
                 gateway=gateway,
                 job=job,
+                grouping_key=grouping_key,
                 registry=registry,
                 timeout=timeout,
             )
