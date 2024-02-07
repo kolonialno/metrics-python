@@ -29,7 +29,14 @@ def push_metrics(
     counter = Counter('name', registry=registry, ...)
 
     # Run logic inside the push_metrics context nanager.
-    with push_metrics(registry=registry, job="<app>", gateway="<pushgateway>"):
+    with push_metrics(
+        registry=registry,
+        job="<app>",
+        gateway="<pushgateway>",
+        # Labels in the grouping key should not overlap with labels used by
+        # metrics.
+        grouping_key={'management_command': 'update-something'},
+    ):
         ...
         counter.inc()
         ...
