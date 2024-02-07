@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "metrics-python"
-version = "0.0.9a4"
+version = "0.0.9a5"
 description = "Generic set of metrics for Python applications."
 authors = ["Eirik Martiniussen Sylliaas <eirik@sylliaas.no>"]
 readme = "README.md"
