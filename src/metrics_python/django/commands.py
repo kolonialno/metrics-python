@@ -57,7 +57,7 @@ def patch_commands() -> None:
             gateway=settings.PUSHGATEWAY,
             # Only replace metrics from the previous run of the current
             # management command.
-            grouping_key={"command": self.__module__},
+            grouping_key={"management_command": self.__module__},
         ):
             with (
                 # Measure command duration.
