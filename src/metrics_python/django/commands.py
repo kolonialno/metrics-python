@@ -52,7 +52,13 @@ def patch_commands() -> None:
         from .conf import settings
 
         # Push metrics when the job complete.
-        with push_metrics(job=settings.JOB, gateway=settings.PUSHGATEWAY):
+        with push_metrics(
+            job=settings.JOB,
+            gateway=settings.PUSHGATEWAY,
+            # Only replace metrics from the previous run of the current
+            # management command.
+            grouping_key={"command": self.__module__},
+        ):
             with (
                 # Measure command duration.
                 MANAGEMENT_COMMAND_DURATION.labels(command=self.__module__).time(),
