@@ -159,7 +159,7 @@ class QueryCounter:
         counter = QueryCounter()
 
         if _CURRENT_QUERY_COUNTER.get(None) is not None:
-            logger.critical(
+            logger.warning(
                 "QueryCounter set up twice; query counts will be incorrect",
             )
 
