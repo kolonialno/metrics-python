@@ -46,6 +46,9 @@ def _measure_command(*, command: str, counter: QueryCounter) -> None:
 def patch_commands() -> None:
     """Patch management commands."""
 
+    if hasattr(BaseCommand, "_metrics_python_is_patched"):
+        return
+
     old_execute = BaseCommand.execute
 
     def execute(self: Any, *args: Any, **kwargs: Any) -> Any:
@@ -72,3 +75,4 @@ def patch_commands() -> None:
                 return value
 
     BaseCommand.execute = wraps(old_execute)(execute)
+    BaseCommand._metrics_python_is_patched = True
