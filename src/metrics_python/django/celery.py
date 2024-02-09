@@ -84,7 +84,7 @@ def _wrap_task_call(task: Any, f: Any) -> Any:
 
         # Initialize the query counter and measure the result after the task
         # is complete.
-        with QueryCounter.create_as_current() as counter:
+        with QueryCounter.create_counter() as counter:
             result = f(*args, **kwargs)
             _measure_task(task=task, counter=counter)
             return result

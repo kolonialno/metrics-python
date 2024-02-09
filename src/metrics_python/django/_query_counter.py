@@ -1,6 +1,5 @@
 import collections
 import contextlib
-import contextvars
 import time
 import traceback
 from logging import getLogger
@@ -13,10 +12,6 @@ from django.template import Node
 from .conf import settings
 
 logger = getLogger(__name__)
-
-_CURRENT_QUERY_COUNTER: contextvars.ContextVar[
-    "QueryCounter | None"
-] = contextvars.ContextVar("_METRICS_PYTHON_CURRENT_QUERY_COUNTER", default=None)
 
 
 def yellow(text: str) -> str:
@@ -155,26 +150,16 @@ class QueryCounter:
 
     @contextlib.contextmanager
     @staticmethod
-    def create_as_current() -> Generator["QueryCounter", None, None]:
+    def create_counter() -> Generator["QueryCounter", None, None]:
         counter = QueryCounter()
 
-        if _CURRENT_QUERY_COUNTER.get(None) is not None:
-            logger.warning(
-                "QueryCounter set up twice; query counts will be incorrect",
-            )
+        with contextlib.ExitStack() as stack:
+            for alias in connections:
+                stack.enter_context(
+                    connections[alias].execute_wrapper(counter),
+                )
 
-        token = _CURRENT_QUERY_COUNTER.set(counter)
+            yield counter
 
-        try:
-            with contextlib.ExitStack() as stack:
-                for alias in connections:
-                    stack.enter_context(
-                        connections[alias].execute_wrapper(counter),
-                    )
-
-                yield counter
-
-                if settings.PRINT_DUPLICATE_QUERIES:
-                    counter.print_duplicate_queries()
-        finally:
-            _CURRENT_QUERY_COUNTER.reset(token)
+            if settings.PRINT_DUPLICATE_QUERIES:
+                counter.print_duplicate_queries()
