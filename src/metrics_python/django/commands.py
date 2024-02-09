@@ -66,7 +66,7 @@ def patch_commands() -> None:
                 # Measure command duration.
                 MANAGEMENT_COMMAND_DURATION.labels(command=self.__module__).time(),
                 # Measure database queries
-                QueryCounter.create_as_current() as counter,
+                QueryCounter.create_counter() as counter,
             ):
                 value = old_execute(self, *args, **kwargs)
 

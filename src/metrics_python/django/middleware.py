@@ -66,7 +66,7 @@ def QueryCountMiddleware(
     if asyncio.iscoroutinefunction(get_response):
 
         async def async_middleware(request: HttpRequest) -> HttpResponse:
-            with QueryCounter.create_as_current() as counter:
+            with QueryCounter.create_counter() as counter:
                 response = await cast(ASYNC_MIDDLEWARE, get_response)(request)
                 _measure_request(request=request, response=response, counter=counter)
 
@@ -75,7 +75,7 @@ def QueryCountMiddleware(
         return async_middleware
 
     def middleware(request: HttpRequest) -> HttpResponse:
-        with QueryCounter.create_as_current() as counter:
+        with QueryCounter.create_counter() as counter:
             response = cast(MIDDLEWARE, get_response)(request)
             _measure_request(request=request, response=response, counter=counter)
 
