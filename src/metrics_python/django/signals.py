@@ -28,6 +28,9 @@ def _get_receiver_name(receiver: Callable[..., Any]) -> str:
 
 
 def patch_signals() -> None:
+    if hasattr(Signal, "_metrics_python_is_patched"):
+        return
+
     old_live_receivers = Signal._live_receivers
 
     def _metrics_python_live_receivers(self: Any, sender: Any) -> Any:
@@ -56,3 +59,4 @@ def patch_signals() -> None:
             return sync_receivers
 
     Signal._live_receivers = _metrics_python_live_receivers
+    Signal._metrics_python_is_patched = True

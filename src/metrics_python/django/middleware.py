@@ -92,6 +92,9 @@ def QueryCountMiddleware(
 def patch_middlewares() -> None:
     from django.core.handlers import base
 
+    if hasattr(base, "_metrics_python_is_patched"):
+        return
+
     old_import_string = base.import_string
 
     def metrics_python_patched_import_string(dotted_path: str) -> Any:
@@ -114,6 +117,7 @@ def patch_middlewares() -> None:
             _import_string_should_wrap_middleware.set(False)
 
     base.BaseHandler.load_middleware = metrics_python_patched_load_middleware
+    base._metrics_python_is_patched = True
 
 
 def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
