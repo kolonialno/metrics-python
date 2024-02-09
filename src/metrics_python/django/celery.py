@@ -21,6 +21,9 @@ def setup_celery_database_metrics() -> None:
 
     import celery.app.trace as trace  # noqa
 
+    if hasattr(trace, "_metrics_python_is_patched"):
+        return
+
     old_build_tracer = trace.build_tracer
 
     def metrics_python_build_tracer(
@@ -42,6 +45,7 @@ def setup_celery_database_metrics() -> None:
         return old_build_tracer(name, task, *args, **kwargs)
 
     trace.build_tracer = metrics_python_build_tracer
+    trace._metrics_python_is_patched = True
 
 
 def _measure_task(*, task: Any, counter: "QueryCounter") -> None:
