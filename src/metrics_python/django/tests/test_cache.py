@@ -4,6 +4,8 @@ from metrics_python.django.cache import patch_caching
 
 
 def test_patch_cache() -> None:
+    # Patch multiple times, it should not affect our metrics.
+    patch_caching()
     patch_caching()
 
     from django.core.cache import cache
