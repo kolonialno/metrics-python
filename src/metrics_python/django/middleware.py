@@ -1,7 +1,10 @@
 import asyncio
+import contextlib
+import time
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any, Callable, ContextManager, Coroutine, cast
+from logging import getLogger
+from typing import Any, Callable, Coroutine, Generator, Optional, cast
 
 from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import sync_and_async_middleware
@@ -15,6 +18,8 @@ from ._metrics import (
 )
 from ._query_counter import QueryCounter
 from ._utils import get_request_method, get_view_name
+
+logger = getLogger(__name__)
 
 MIDDLEWARE = Callable[[HttpRequest], HttpResponse]
 ASYNC_MIDDLEWARE = Callable[[HttpRequest], Coroutine[Any, Any, HttpResponse]]
@@ -132,16 +137,39 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
 
         return str(function_basename)
 
-    def _middleware_timer(old_method: Any) -> ContextManager[None]:
+    @contextlib.contextmanager
+    def _middleware_timer(
+        old_method: Any,
+        middleware: Optional["MetricsPythonWrappingMiddleware"] = None,
+    ) -> Generator[None, None, None]:
         """
         Return a generator that is used to measure the method execution duration.
         """
 
         method_name = _middleware_method(old_method)
 
-        return MIDDLEWARE_DURATION.labels(
+        start = time.perf_counter()
+
+        yield
+
+        duration = time.perf_counter() - start
+
+        if middleware:
+            get_response_duration = getattr(
+                middleware, "_metric_python_get_response_duration", None
+            )
+            if not get_response_duration:
+                logger.warning(
+                    "Middleware was provided, but no get_response duration was found."
+                )
+            else:
+                duration = max(duration - get_response_duration, 0)
+
+            middleware._metric_python_get_response_duration = None
+
+        MIDDLEWARE_DURATION.labels(
             middleware=middleware_name, method=method_name
-        ).time()
+        ).observe(duration)
 
     def _get_wrapped_method(old_method: Any) -> Any:
         """
@@ -158,19 +186,55 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
 
         return wrapped_method
 
+    def _get_wrapped_get_response(
+        get_response: Any, middleware: "MetricsPythonWrappingMiddleware"
+    ) -> Any:
+        """
+        We need to wrap get_response to subtract the time used by other
+        middlewares and the view to get the time actually spent in the
+        current middleware.
+        """
+
+        @contextlib.contextmanager
+        def _get_response_timer() -> Generator[None, None, None]:
+            start = time.perf_counter()
+
+            yield
+
+            middleware._metric_python_get_response_duration = (
+                time.perf_counter() - start
+            )
+
+        def _get_response(*args: Any, **kwargs: Any) -> Any:
+            with _get_response_timer():
+                return get_response(*args, **kwargs)
+
+        async def _aget_response(*args: Any, **kwargs: Any) -> Any:
+            with _get_response_timer():
+                return await get_response(*args, **kwargs)
+
+        if asyncio.iscoroutinefunction(get_response):
+            return wraps(get_response)(_aget_response)
+
+        return wraps(get_response)(_get_response)
+
     class MetricsPythonWrappingMiddleware:
         async_capable = getattr(middleware, "async_capable", False)
 
         def __init__(self, get_response: Any = None, *args: Any, **kwargs: Any) -> None:
             if get_response:
-                self._inner = middleware(get_response, *args, **kwargs)
+                self._inner = middleware(
+                    _get_wrapped_get_response(get_response, self), *args, **kwargs
+                )
             else:
                 self._inner = middleware(*args, **kwargs)
 
+            # Used to identify if this is an async middleware or not.
             self.get_response = get_response
 
             self._call_method = None
             self._acall_method = None
+            self._metric_python_get_response_duration: float | None = None
 
             if self.async_capable:
                 self._async_check()
@@ -205,7 +269,7 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
             if f is None:
                 self._call_method = f = self._inner.__call__
 
-            with _middleware_timer(old_method=f):
+            with _middleware_timer(old_method=f, middleware=self):
                 return f(*args, **kwargs)
 
         async def __acall__(self, *args: Any, **kwargs: Any) -> Any:
@@ -216,7 +280,7 @@ def _wrap_middleware(middleware: Any, middleware_name: str) -> Any:  # noqa
                 else:
                     self._acall_method = f = self._inner
 
-            with _middleware_timer(old_method=f):
+            with _middleware_timer(old_method=f, middleware=self):
                 return await f(*args, **kwargs)
 
     for attr in (
