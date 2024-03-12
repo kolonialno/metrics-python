@@ -4,6 +4,8 @@ from typing import Any
 
 from django.utils import timezone
 
+from metrics_python.generics.heartbeats import HeartbeatState, capture_checkin
+
 from ..generics.workers import export_worker_busy_state
 from ._constants import PUBLISH_TIME_HEADER, TASK_HEADERS
 from ._metrics import (
@@ -74,3 +76,47 @@ def task_postrun(task: Any, **kwargs: Any) -> None:
     TASK_LAST_EXECUTION.labels(
         task=task.name, queue=queue, state=state
     ).set_to_current_time()
+
+
+#
+# Heartbeats
+#
+
+
+def crons_task_success(sender: Any, **kwargs: Any) -> None:
+    # Set the task execution duration
+    task_started_time = getattr(sender, "__metrics_python_start_time", None)
+
+    duration: float | None = None
+    if task_started_time:
+        duration = time.perf_counter() - task_started_time
+
+    capture_checkin(
+        name=sender.name, state=HeartbeatState.OK, duration_seconds=duration
+    )
+
+
+def crons_task_failure(sender: Any, **kwargs: Any) -> None:
+    # Set the task execution duration
+    task_started_time = getattr(sender, "__metrics_python_start_time", None)
+
+    duration: float | None = None
+    if task_started_time:
+        duration = time.perf_counter() - task_started_time
+
+    capture_checkin(
+        name=sender.name, state=HeartbeatState.ERROR, duration_seconds=duration
+    )
+
+
+def crons_task_retry(sender: Any, **kwargs: Any) -> None:
+    # Set the task execution duration
+    task_started_time = getattr(sender, "__metrics_python_start_time", None)
+
+    duration: float | None = None
+    if task_started_time:
+        duration = time.perf_counter() - task_started_time
+
+    capture_checkin(
+        name=sender.name, state=HeartbeatState.ERROR, duration_seconds=duration
+    )
