@@ -10,7 +10,9 @@ from metrics_python.generics.heartbeats import (
     register_heartbeat,
 )
 
+from ._constants import BEAT_TASK_HEADER
 from ._signals import (
+    _set_headers,
     before_task_publish,
     crons_task_failure,
     crons_task_retry,
@@ -70,6 +72,18 @@ def _patch_beat() -> None:
             name=schedule_entry.task,
             state=HeartbeatState.IN_PROGRESS,
         )
+
+        message_headers = schedule_entry.options.pop("headers", {})
+
+        # Store metrics-python headers in the task headers, not the
+        # message headers.
+        message_headers.setdefault("headers", {})
+        message_headers["headers"] = _set_headers(
+            existing_headers=message_headers["headers"],
+            headers={BEAT_TASK_HEADER: True},
+        )
+
+        schedule_entry.options["headers"] = message_headers
 
         return original_apply_entry(*args, **kwargs)
 
