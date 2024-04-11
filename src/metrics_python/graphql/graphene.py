@@ -38,6 +38,7 @@ class MetricsMiddleware:
                     if operation
                     else "Unknown operation type"
                 ),
+                backend="graphene",
             ).observe(duration)
 
         return return_value
