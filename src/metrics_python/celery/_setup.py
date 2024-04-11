@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import Any
 
@@ -65,7 +66,7 @@ def _patch_beat() -> None:
     original_apply_entry = Scheduler.apply_entry
 
     def metrics_python_apply_entry(*args: Any, **kwargs: Any) -> Any:
-        _, schedule_entry = args
+        scheduler, schedule_entry = args
 
         # Capture scheduled task
         capture_checkin(
@@ -73,7 +74,13 @@ def _patch_beat() -> None:
             state=HeartbeatState.IN_PROGRESS,
         )
 
-        message_headers = schedule_entry.options.pop("headers", {})
+        # The schedule entry is the same between ticks from the same entry
+        # in the beat schedule. We need to do a deepcopy of the entry to make
+        # sure the headers we add to it do not continue to stay there for
+        # the next tick.
+        new_schedule_entry = copy.deepcopy(schedule_entry)
+
+        message_headers = new_schedule_entry.options.pop("headers", {})
 
         # Store metrics-python headers in the task headers, not the
         # message headers.
@@ -83,9 +90,9 @@ def _patch_beat() -> None:
             headers={BEAT_TASK_HEADER: True},
         )
 
-        schedule_entry.options["headers"] = message_headers
+        new_schedule_entry.options["headers"] = message_headers
 
-        return original_apply_entry(*args, **kwargs)
+        return original_apply_entry(scheduler, new_schedule_entry, **kwargs)
 
     Scheduler.apply_entry = metrics_python_apply_entry
     Scheduler._metrics_python_is_patched = True
