@@ -49,10 +49,11 @@ class PrometheusExtension(SchemaExtension):
             operation_name=operation_name or "Anonymous Query",
             resource=self._resource_name,
             operation_type=operation_type,
+            backend="strawberry",
         ).observe(duration)
-        LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.OPERATION).observe(
-            duration
-        )
+        LIFECYCLE_STEP_DURATION.labels(
+            lifecycle_step=LifecycleStep.OPERATION, backend="strawberry"
+        ).observe(duration)
 
     def on_validate(self) -> Generator[None, None, None]:
         start_time = time.perf_counter()
@@ -61,9 +62,9 @@ class PrometheusExtension(SchemaExtension):
 
         duration = time.perf_counter() - start_time
 
-        LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.VALIDATION).observe(
-            duration
-        )
+        LIFECYCLE_STEP_DURATION.labels(
+            lifecycle_step=LifecycleStep.VALIDATION, backend="strawberry"
+        ).observe(duration)
 
     def on_parse(self) -> Generator[None, None, None]:
         start_time = time.perf_counter()
@@ -72,9 +73,9 @@ class PrometheusExtension(SchemaExtension):
 
         duration = time.perf_counter() - start_time
 
-        LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.PARSE).observe(
-            duration
-        )
+        LIFECYCLE_STEP_DURATION.labels(
+            lifecycle_step=LifecycleStep.PARSE, backend="strawberry"
+        ).observe(duration)
 
     async def resolve(
         self,
@@ -101,9 +102,9 @@ class PrometheusExtension(SchemaExtension):
 
         duration = time.perf_counter() - start_time
 
-        LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.RESOLVE).observe(
-            duration
-        )
+        LIFECYCLE_STEP_DURATION.labels(
+            lifecycle_step=LifecycleStep.RESOLVE, backend="strawberry"
+        ).observe(duration)
 
         return result
 
@@ -126,8 +127,8 @@ class PrometheusExtensionSync(PrometheusExtension):
 
         duration = time.perf_counter() - start_time
 
-        LIFECYCLE_STEP_DURATION.labels(lifecycle_step=LifecycleStep.RESOLVE).observe(
-            duration
-        )
+        LIFECYCLE_STEP_DURATION.labels(
+            lifecycle_step=LifecycleStep.RESOLVE, backend="strawberry"
+        ).observe(duration)
 
         return result
