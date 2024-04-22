@@ -1,6 +1,14 @@
-from prometheus_client import Gauge, Histogram
+from prometheus_client import Counter, Gauge, Histogram
 
 from ..constants import NAMESPACE
+
+TASK_PUBLISHED = Counter(
+    "task_published",
+    "Number of published tasks.",
+    ["task", "routing_key"],
+    namespace=NAMESPACE,
+    subsystem="celery",
+)
 
 TASK_EXECUTION_DELAY = Histogram(
     "task_execution_delay",
