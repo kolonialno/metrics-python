@@ -12,6 +12,7 @@ from ._metrics import (
     TASK_EXECUTION_DELAY,
     TASK_EXECUTION_DURATION,
     TASK_LAST_EXECUTION,
+    TASK_PUBLISHED,
 )
 
 
@@ -53,7 +54,9 @@ def worker_process_init(**kwargs: Any) -> None:
     export_worker_busy_state(busy=False, worker_type="celery")
 
 
-def before_task_publish(*args: Any, **kwargs: Any) -> None:
+def before_task_publish(
+    sender: str, routing_key: str, *args: Any, **kwargs: Any
+) -> None:
     message_headers = kwargs.pop("headers", {})
 
     # Store metrics-python headers in the task headers, not the
@@ -67,6 +70,9 @@ def before_task_publish(*args: Any, **kwargs: Any) -> None:
     )
 
     kwargs["headers"] = message_headers
+
+    # Increment the tasks published counter
+    TASK_PUBLISHED.labels(task=sender, routing_key=routing_key).inc()
 
 
 def task_prerun(sender: Any, **kwargs: Any) -> None:
