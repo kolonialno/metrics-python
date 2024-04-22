@@ -29,9 +29,9 @@ class QueryCounter:
 
         self.stack_summaries: list[tuple[traceback.StackSummary, str]] = []
         self.stacks: list[list[tuple[FrameType, int]]] = []
-        self.duplicate_count: collections.Counter[
-            tuple[str, int]
-        ] = collections.Counter()
+        self.duplicate_count: collections.Counter[tuple[str, int]] = (
+            collections.Counter()
+        )
 
     def __call__(
         self, execute: Any, sql: Any, params: Any, many: Any, context: Any
@@ -78,8 +78,7 @@ class QueryCounter:
 
     def get_total_query_duration_seconds_by_alias(self) -> dict[str, float]:
         return {
-            alias: duration / 10.0**9
-            for alias, duration in self.duration_count.items()
+            alias: duration / 10.0**9 for alias, duration in self.duration_count.items()
         }
 
     def get_total_duplicate_query_count(self) -> int:
