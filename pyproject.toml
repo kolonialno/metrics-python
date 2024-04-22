@@ -85,8 +85,6 @@ target-version = ['py312']
 include = '\.pyi?$'
 extend-exclude = 'migrations'
 
-safe = true
-
 [tool.pytest.ini_options]
 testpaths = ["src/metrics_python"]
 # Include captured log messages in system-out in CI report file

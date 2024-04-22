@@ -1,4 +1,5 @@
 """Generic set of metrics for Python applications."""
+
 from importlib.metadata import PackageNotFoundError, version
 
 try:
