@@ -10,6 +10,15 @@ TASK_PUBLISHED = Counter(
     subsystem="celery",
 )
 
+TASK_APPLY_DURATION = Histogram(
+    "task_apply_duration",
+    "Time spent applying the task",
+    ["task"],
+    unit="seconds",
+    namespace=NAMESPACE,
+    subsystem="celery",
+)
+
 TASK_EXECUTION_DELAY = Histogram(
     "task_execution_delay",
     "Time spent in the messaging queue before a worker starts executing a task",

@@ -1,5 +1,6 @@
 import copy
 import logging
+from functools import wraps
 from typing import Any
 
 import celery
@@ -12,6 +13,7 @@ from metrics_python.generics.heartbeats import (
 )
 
 from ._constants import BEAT_TASK_HEADER
+from ._metrics import TASK_APPLY_DURATION
 from ._signals import (
     _set_headers,
     before_task_publish,
@@ -49,6 +51,8 @@ def setup_celery_metrics(patch_beat: bool = False) -> None:
     celery.signals.before_task_publish.connect(before_task_publish, weak=False)
     celery.signals.task_prerun.connect(task_prerun, weak=True)
     celery.signals.task_postrun.connect(task_postrun, weak=True)
+
+    _patch_apply_async()
 
     celery._metrics_python_is_patched = True
 
@@ -134,3 +138,20 @@ def _register_beat_heartbeats() -> None:
             grace_period_minutes=grace_period_minutes,
             max_runtime_minutes=max_runtime_minutes,
         )
+
+
+def _wrap_apply_async(f: Any) -> Any:
+    @wraps(f)
+    def apply_async(*args: Any, **kwargs: Any) -> Any:
+        task = args[0]
+
+        with TASK_APPLY_DURATION.labels(task=task.name).time():
+            return f(*args, **kwargs)
+
+    return apply_async
+
+
+def _patch_apply_async() -> None:
+    from celery.app.task import Task
+
+    Task.apply_async = _wrap_apply_async(Task.apply_async)
