@@ -81,6 +81,21 @@ from metrics_python.django.celery import setup_celery_database_metrics
 setup_celery_database_metrics()
 ```
 
+### Postgres database connection metrics
+
+The `get_new_connection` method in the PostgreSQL database connection
+engine can be observed by using a custom connection engine from
+metrics-python.
+
+```python
+DATABASES = {
+    "default": {
+        "ENGINE": 'metrics_python.django.postgres_engine',
+        ...
+    }
+}
+```
+
 ## Celery
 
 To setup Celery monitoring, import and execute `setup_celery_metrics` as early
