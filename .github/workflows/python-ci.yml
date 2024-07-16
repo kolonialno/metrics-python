@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Setup Python project
-        uses: kolonialno/actions/setup-python@setup-python-2.2.2
+        uses: ./.github/actions/setup-python
         with:
           checkout: true
           tool-versions-path: .tool-versions
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Setup Python project
-        uses: kolonialno/actions/setup-python@setup-python-2.2.2
+        uses: ./.github/actions/setup-python
         with:
           checkout: true
           tool-versions-path: .tool-versions

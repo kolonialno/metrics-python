@@ -1,0 +1,174 @@
+---
+name: Setup Python
+description: |
+  Installs Python dependencies with Poetry.
+inputs:
+  python-version:
+    description: |
+      Python version.
+      By default it reads the version from .tool-versions
+    required: false
+    default: ""
+  poetry-version:
+    description: |
+      Poetry version
+    required: false
+  poetry-args:
+    description: |
+      Poetry arguments
+    required: false
+    default: ""
+  version:
+    description: |
+      If set update the pyproject.toml version by running
+      poetry version <version>.
+      Must be a PEP compatible version.
+    required: false
+    default: ""
+  path:
+    description: |
+      The repo path that contains pyproject.toml.
+      Defaults to the root of the repository.
+    required: false
+    default: "."
+  tool-versions-path:
+    description: |
+      Path of .tool-versions file.
+      .tool-versions by default.
+    required: false
+    default: ".tool-versions"
+  checkout:
+    description: |
+      Checkout repo if needed by setting to 'true'.
+      Default is false.
+    required: false
+    default: "false"
+
+outputs:
+  python-version:
+    description: |-
+      Python version in major.minor.patch format.
+    value: ${{ steps.versions.outputs.python }}
+  poetry-version:
+    description: |-
+      Poetry version
+    value: ${{ steps.versions.outputs.poetry }}
+  python-version-minor:
+    description: |-
+      Python version in major.minor format.
+      Assuming input format or .tool-versions format is major.minor.patch.
+    value: ${{ steps.python_minor.outputs.python_minor }}
+  pyproject-version:
+    description: |-
+      Extract version from Pyproject file.
+      If not on main branch append the commit sha
+      with delimiter '-'.
+    value: ${{ steps.pyproject.outputs.version }}
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      if: ${{ inputs.checkout == 'true' }}
+
+    - name: Read .tool-versions
+      uses: marocchino/tool-versions-action@v1
+      if: ${{ inputs.poetry-version == '' || inputs.python-version == '' }}
+      id: tool-versions
+      with:
+        path: ${{ inputs.tool-versions-path }}
+
+    # Allows the action to use the input versions when spesified,
+    # it not fallback to the .tool-versions
+    - name: Set versions
+      shell: bash
+      id: versions
+      run: |
+        set -ex
+        if [ "${{ inputs.poetry-version }}" == '' ]; then
+          echo "poetry=${{ steps.tool-versions.outputs.poetry }}" >> $GITHUB_OUTPUT;
+          echo Poetry version is ${{ steps.tool-versions.outputs.poetry }} from .tool-versions file
+        else
+          echo "poetry=${{ inputs.poetry-version }}" >> $GITHUB_OUTPUT;
+          echo Poetry version is ${{ inputs.poetry-version }} from input argument
+        fi
+
+        if [ "${{ inputs.python-version }}" == '' ]; then
+          echo "python=${{ steps.tool-versions.outputs.python }}" >> $GITHUB_OUTPUT;
+          echo Python version is ${{ steps.tool-versions.outputs.python }} from .tool-versions file
+
+        else
+          echo "python=${{ inputs.python-version }}" >> $GITHUB_OUTPUT;
+          echo Python version is ${{ inputs.python-version }} from input argument
+        fi
+
+    # Extract the major.minor version from Python version.
+    - id: python_minor
+      shell: bash
+      run: |
+        python_minor=$(echo ${{ steps.versions.outputs.python }} | cut -d'.' -f1,2)
+        echo python_minor=$python_minor
+        echo "python_minor=$python_minor" >> $GITHUB_OUTPUT;
+
+    - name: Install poetry
+      shell: bash
+      run: pipx install poetry==${{ steps.versions.outputs.poetry }}
+
+    - name: Setup python ${{ steps.versions.outputs.python }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ steps.versions.outputs.python }}
+        cache: poetry
+
+    - name: Poetry lock path
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      id: lockfile
+      run: |
+        echo "path=${{ inputs.path }}/poetry.lock" >> $GITHUB_OUTPUT;
+
+    - name: Load Poetry cache
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.path }}/.venv
+        key: venv-${{ runner.os }}-python-${{ steps.versions.outputs.python }}-poetry-${{ steps.versions.outputs.poetry }}-lock-${{ hashFiles(steps.lockfile.outputs.path) }}
+
+    - name: Print project version
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      run: poetry version
+
+    # Must run before the poetry install
+    - name: Update pyproject.toml version to ${{ inputs.version }}
+      shell: bash
+      if: ${{ inputs.version != '' }}
+      working-directory: ${{ inputs.path }}
+      run: |
+        set -ex
+        poetry version "${{ inputs.version }}" --no-interaction
+        echo "Updated project version: $(poetry version --short)"
+        test "$(poetry version --short)" = "${{ inputs.version }}"
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      run: |
+        set -ex
+        poetry install --no-interaction ${{ inputs.poetry-args }}
+
+    - name: Add .venv to GitHub path
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      run: |
+        echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+        echo "VIRTUAL_ENV=$(pwd)/.venv" >> $GITHUB_ENV
+
+    - name: Output Pyproject version
+      shell: bash
+      working-directory: ${{ inputs.path }}
+      id: pyproject
+      run: |
+        set -ex
+        echo "version=$(poetry version -s)" >> $GITHUB_OUTPUT

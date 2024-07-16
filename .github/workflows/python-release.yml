@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python project
-        uses: kolonialno/actions/setup-python@setup-python-2.2.2
+        uses: ./.github/actions/setup-python
         with:
           checkout: true
           tool-versions-path: .tool-versions
@@ -27,9 +27,3 @@ jobs:
 
       - name: Poetry build
         run: poetry build
-
-      - name: Publish to Gemfury
-        run: poetry publish -r oda -u ${{ secrets.GEMFURY_PUSH_TOKEN }} -p NOPASS
-
-      - name: Publish to Artifact Registry
-        run: poetry publish -r oda-python
